@@ -29,8 +29,21 @@ contract RWAMarketplace is Ownable, ReentrancyGuard {
     event TokensPurchased(address indexed tokenAddress, address indexed buyer, uint256 amount, uint256 totalPrice);
     event RevenueClaimed(address indexed tokenCreator, uint256 amount);
     event PoolPriceUpdated(address indexed tokenAddress, uint256 newPricePerToken);
+    event LiquidityPoolUpdated(address indexed oldPool, address indexed newPool);
+    event FeeTransferred(address indexed recipient, uint256 amount);
 
     constructor() Ownable(msg.sender) {}
+    
+    /**
+     * @dev Set or update the Liquidity pool address - only owner can do this
+     * @param newLiquidityPool The address of the Liquidity pool
+     */
+    function setLiquidityPool(address newLiquidityPool) external onlyOwner {
+        require(newLiquidityPool != address(0), "Invalid pool address");
+        address oldPool = address(liquidityPool);
+        liquidityPool = LiquidityPool(newLiquidityPool);
+        emit LiquidityPoolUpdated(oldPool, newLiquidityPool);
+    }
 
     /**
      * @dev Add tokens to the pool - only token creator can do this
