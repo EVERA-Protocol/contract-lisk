@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {LiquidityPool} from "./LiquidityPool.sol";
 
 /**
  * @title RWAMarketplace
@@ -131,8 +132,15 @@ contract RWAMarketplace is Ownable, ReentrancyGuard {
         require(msg.value == totalPrice, "Incorrect payment amount");
         
         // Add revenue to token creator's pending amount
-        pendingRevenue[pool.tokenCreator] += totalPrice;
-        
+        // totalPrice should be reduced to 80% of the price
+        // 20% goes to the uniswap pool
+        uint256 revenue = totalPrice * 80 / 100;
+        pendingRevenue[pool.tokenCreator] += revenue;
+
+        uint256 uniswapLiquidity = totalPrice * 20 / 100;
+        // call the uniswap pool to add liquidity from LiquidityPool contract
+        LiquidityPool(uniswapPool).addLiquidity(tokenAddress, uniswapLiquidity);
+
         // Update pool
         pool.totalTokens -= amount;
         if (pool.totalTokens == 0) {

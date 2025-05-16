@@ -6,6 +6,7 @@ import "./interfaces/IRWALaunchpad.sol";
 import "./libraries/RWAConstants.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./LiquidityPool.sol";
 
 /**
  * @title RWALaunchpad
@@ -87,6 +88,9 @@ contract RWALaunchpad is Ownable(msg.sender), ReentrancyGuard, IRWALaunchpad {
         // Store the token address
         _allRWATokens.push(tokenAddress);
         _creatorToTokens[msg.sender].push(tokenAddress);
+
+        // create new empty pool for the token
+        LiquidityPool(uniswapPool).createPool(tokenAddress, 0, 0);
 
         emit RWATokenCreated(
             msg.sender,
