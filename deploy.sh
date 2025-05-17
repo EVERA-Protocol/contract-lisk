@@ -9,6 +9,8 @@ NC='\033[0m' # No Color
 RPC_URL="http://localhost:8545"
 PRIVATE_KEY=""
 BROADCAST=false
+VERIFY=false
+VERIFIER_URL=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -24,6 +26,14 @@ while [[ $# -gt 0 ]]; do
     --broadcast)
       BROADCAST=true
       shift
+      ;;
+    --verify)
+      VERIFY=true
+      shift
+      ;;
+    --verifier-url)
+      VERIFIER_URL="$2"
+      shift 2
       ;;
     --network)
       case "$2" in
@@ -48,6 +58,10 @@ while [[ $# -gt 0 ]]; do
         base-sepolia)
            RPC_URL="https://base-sepolia.drpc.org"
           ;;
+        lisk-sepolia)
+           RPC_URL="https://rpc.sepolia-api.lisk.com"
+           export CHAIN_ID=4202
+          ;;
         *)
           echo "Unknown network: $2"
           exit 1
@@ -62,7 +76,9 @@ while [[ $# -gt 0 ]]; do
       echo "  --rpc-url URL       RPC URL to use for deployment (default: http://localhost:8545)"
       echo "  --private-key KEY   Private key to use for deployment"
       echo "  --broadcast         Broadcast transactions to the network"
-      echo "  --network NETWORK   Use predefined network (local, sepolia, goerli, mainnet, polygon, mumbai)"
+      echo "  --verify            Verify contracts on the block explorer"
+      echo "  --verifier-url URL  URL for the contract verification service"
+      echo "  --network NETWORK   Use predefined network (local, sepolia, goerli, mainnet, polygon, mumbai, base-sepolia, lisk-sepolia)"
       echo "  --help              Show this help message"
       exit 0
       ;;
@@ -93,12 +109,36 @@ if $BROADCAST; then
   CMD="$CMD --broadcast"
 fi
 
+# Add --verify flag if requested
+if $VERIFY; then
+  CMD="$CMD --verify"
+  
+  # Add verifier URL if provided
+  if [[ -n "$VERIFIER_URL" ]]; then
+    CMD="$CMD --verifier-url $VERIFIER_URL"
+  fi
+fi
+
+# Add chain ID if set
+if [[ -n "$CHAIN_ID" ]]; then
+  CMD="$CMD --chain-id $CHAIN_ID"
+fi
+
 # Print deployment information
 echo -e "${GREEN}Deploying contracts to:${NC} $RPC_URL"
+if [[ -n "$CHAIN_ID" ]]; then
+  echo -e "${GREEN}Chain ID:${NC} $CHAIN_ID"
+fi
 if $BROADCAST; then
   echo -e "${YELLOW}Transactions will be broadcast to the network${NC}"
 else
   echo -e "${YELLOW}Dry run mode (use --broadcast to send transactions)${NC}"
+fi
+if $VERIFY; then
+  echo -e "${YELLOW}Contracts will be verified after deployment${NC}"
+  if [[ -n "$VERIFIER_URL" ]]; then
+    echo -e "${YELLOW}Using verifier URL:${NC} $VERIFIER_URL"
+  fi
 fi
 
 # Run the deployment script

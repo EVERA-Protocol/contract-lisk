@@ -11,7 +11,7 @@ contract DeployLiquidityPool is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         
         // Get the Pool Manager address from environment or use a default for testing
-        address poolManagerAddress = vm.envOr("POOL_MANAGER_ADDRESS", address(0));
+        address poolManagerAddress = vm.envOr("POOL_MANAGER_ADDRESS", address(0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408));
         require(poolManagerAddress != address(0), "Pool Manager address not set");
 
         vm.startBroadcast(deployerPrivateKey);

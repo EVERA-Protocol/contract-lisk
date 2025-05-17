@@ -59,6 +59,9 @@ while [[ $# -gt 0 ]]; do
         base-sepolia)
           RPC_URL="https://sepolia.base.org"
           ;;
+        lisk-sepolia)
+           RPC_URL="https://rpc.sepolia-api.lisk.com"
+          ;;
         *)
           echo "Unknown network: $2"
           exit 1

@@ -90,7 +90,14 @@ contract RWALaunchpad is Ownable(msg.sender), ReentrancyGuard, IRWALaunchpad {
         _creatorToTokens[msg.sender].push(tokenAddress);
 
         // create new empty pool for the token
-        LiquidityPool(uniswapPool).createPool(tokenAddress, 0, 0);
+        // address uniswapPool = 0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408;
+        // LiquidityPool(uniswapPool).createPool(
+        //     tokenAddress,
+        //     3000,
+        //     100,
+        //     address(0),
+        //     0
+        // );
 
         emit RWATokenCreated(
             msg.sender,

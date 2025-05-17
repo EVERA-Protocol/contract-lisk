@@ -33,17 +33,6 @@ contract RWAMarketplace is Ownable, ReentrancyGuard {
     event FeeTransferred(address indexed recipient, uint256 amount);
 
     constructor() Ownable(msg.sender) {}
-    
-    /**
-     * @dev Set or update the Liquidity pool address - only owner can do this
-     * @param newLiquidityPool The address of the Liquidity pool
-     */
-    function setLiquidityPool(address newLiquidityPool) external onlyOwner {
-        require(newLiquidityPool != address(0), "Invalid pool address");
-        address oldPool = address(liquidityPool);
-        liquidityPool = LiquidityPool(newLiquidityPool);
-        emit LiquidityPoolUpdated(oldPool, newLiquidityPool);
-    }
 
     /**
      * @dev Add tokens to the pool - only token creator can do this
@@ -128,13 +117,18 @@ contract RWAMarketplace is Ownable, ReentrancyGuard {
         emit PoolPriceUpdated(tokenAddress, newPricePerToken);
     }
 
-    /**
-     * @dev Buy tokens from the pool - anyone can buy
-     * @param tokenAddress The address of the token to buy
-     * @param amount The amount of tokens to buy
-     */
-    function buyTokens(address tokenAddress, uint256 amount) external payable nonReentrant {
+    address constant IDRX = 0xD63029C1a3dA68b51c67c6D1DeC3DEe50D681661;
+    address public PAYMENT_TOKEN_ADDRESS = IDRX;
+
+    function updatePaymentToken(address newPaymentTokenAddress) external onlyOwner {
+        PAYMENT_TOKEN_ADDRESS = newPaymentTokenAddress;
+    }
+
+    function buyTokens(address tokenAddress, uint256 amount, address paymentTokenAddress) external nonReentrant {
         require(amount > 0, "Amount must be greater than 0");
+        
+        // Simple check to ensure only the specified payment token is used
+        require(paymentTokenAddress == PAYMENT_TOKEN_ADDRESS, "Invalid payment token");
         
         Pool storage pool = pools[tokenAddress];
         require(pool.active, "Pool not active");
@@ -142,18 +136,15 @@ contract RWAMarketplace is Ownable, ReentrancyGuard {
         
         // Calculate total price
         uint256 totalPrice = amount * pool.pricePerToken;
-        require(msg.value == totalPrice, "Incorrect payment amount");
+        
+        // Transfer payment tokens from buyer to this contract
+        IERC20 paymentToken = IERC20(PAYMENT_TOKEN_ADDRESS);
+        require(paymentToken.transferFrom(msg.sender, address(this), totalPrice), "Payment transfer failed");
         
         // Add revenue to token creator's pending amount
-        // totalPrice should be reduced to 80% of the price
-        // 20% goes to the uniswap pool
-        uint256 revenue = totalPrice * 80 / 100;
+        uint256 revenue = totalPrice * 100 / 100;
         pendingRevenue[pool.tokenCreator] += revenue;
-
-        uint256 uniswapLiquidity = totalPrice * 20 / 100;
-        // call the uniswap pool to add liquidity from LiquidityPool contract
-        LiquidityPool(uniswapPool).addLiquidity(tokenAddress, uniswapLiquidity);
-
+        
         // Update pool
         pool.totalTokens -= amount;
         if (pool.totalTokens == 0) {
@@ -177,9 +168,9 @@ contract RWAMarketplace is Ownable, ReentrancyGuard {
         // Reset pending revenue
         pendingRevenue[msg.sender] = 0;
         
-        // Transfer ETH to creator
-        (bool success, ) = payable(msg.sender).call{value: amount}("");
-        require(success, "ETH transfer failed");
+        // Transfer Revenue to creator
+        IERC20 token = IERC20(PAYMENT_TOKEN_ADDRESS);
+        require(token.transfer(msg.sender, amount), "Token transfer failed");
         
         emit RevenueClaimed(msg.sender, amount);
     }
