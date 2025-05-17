@@ -17,16 +17,7 @@ contract DeployAVS is Script {
 
     function run() external {
         // Load environment variables
-        //         # Deployment private key (without 0x prefix)
-        // PRIVATE_KEY=0xfc5125e9fdc8963c11b341c5d76b9c0aeb90758aa9dbe1e9b8c506581bcaf490
-
-        // # EigenLayer contract addresses
-        // AVS_DIRECTORY=0xB8F3221Bf7974F1682d0AcBC2F40ba3597db3151
-        // STAKE_REGISTRY=0xE62a528Fa2787B7ba2399506D94D82c98fAFD01a
-        // REWARDS_COORDINATOR=0x16A26002119C039DE57b051c8e8871b0AE8f2768
-        // DELEGATION_MANAGER=0xff8e53df56550c27bF6A8BAADC839eD86A7c99d7
-        // ALLOCATION_MANAGER=0x51FF720105655c01BE501523Dd5C2642ce53FDde
-        uint256 deployerPrivateKey = 0xfc5125e9fdc8963c11b341c5d76b9c0aeb90758aa9dbe1e9b8c506581bcaf490;
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address avsDirectory = 0xB8F3221Bf7974F1682d0AcBC2F40ba3597db3151;
         address stakeRegistry = 0xE62a528Fa2787B7ba2399506D94D82c98fAFD01a;
         address rewardsCoordinator = 0x16A26002119C039DE57b051c8e8871b0AE8f2768;
