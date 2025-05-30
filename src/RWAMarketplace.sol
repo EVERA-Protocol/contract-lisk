@@ -2,9 +2,9 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {LiquidityPool} from "./LiquidityPool.sol";
 
 /**
  * @title RWAMarketplace
@@ -134,8 +134,16 @@ contract RWAMarketplace is Ownable, ReentrancyGuard {
         require(pool.active, "Pool not active");
         require(pool.totalTokens >= amount, "Not enough tokens in pool");
         
-        // Calculate total price
-        uint256 totalPrice = amount * pool.pricePerToken;
+        // Get decimals for both tokens
+        uint8 tokenDecimals = IERC20Metadata(tokenAddress).decimals();
+        uint8 paymentDecimals = IERC20Metadata(PAYMENT_TOKEN_ADDRESS).decimals();
+        
+        // Check for precision loss before calculation
+        uint256 rawPrice = amount * pool.pricePerToken;
+        require(rawPrice >= (10 ** tokenDecimals), "Purchase amount too small for current price");
+        
+        uint256 totalPrice = rawPrice / (10 ** tokenDecimals);
+        require(totalPrice > 0, "Total price must be greater than 0");
         
         // Transfer payment tokens from buyer to this contract
         IERC20 paymentToken = IERC20(PAYMENT_TOKEN_ADDRESS);
